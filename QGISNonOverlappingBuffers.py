@@ -21,11 +21,6 @@ errorTolerance = 2
 #######################################################################
 """
 
-#Set up the layer name for the raster calculations
-inImageName = polygonLayer1.split("/")
-inImageName = inImageName[-1]
-inImageName = inImageName[:len(inImageName)-4]
-outImageName = inImageName
 
 #Making a folder for processing
 rootProcessDirectory = str(Path(polygonLayer1).parent.absolute()).replace('\\','/') + '/'
