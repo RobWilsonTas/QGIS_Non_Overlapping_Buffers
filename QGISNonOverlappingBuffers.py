@@ -9,8 +9,8 @@ User options for the tiling section
 """
 
 #Initial variable assignment
-polygonLayer1 = 'D:/Other Tasks/BigMapV4/PrivateLandSpatialData/TestClipoutPublic.gpkg' #E.g 'C:/Temp/BigImage.tif'
-polygonLayer2 = 'D:/Other Tasks/BigMapV4/PrivateLandSpatialData/TestClipoutPrivate.gpkg' #
+polygonLayer1 = 'D:/PublicLand.gpkg'
+polygonLayer2 = 'D:/PrivateLand.gpkg'
 
 maximumGap = 200
 errorTolerance = 2
