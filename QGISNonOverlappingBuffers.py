@@ -9,11 +9,11 @@ User options for the tiling section
 """
 
 #Initial variable assignment
-polygonLayer1 = 'D:/PublicLand.gpkg'
-polygonLayer2 = 'D:/PrivateLand.gpkg'
+polygonLayer1 = 'D:/PublicLand.gpkg' 
+polygonLayer2 = 'D:/PrivateLand.gpkg' 
 
-maximumGap = 200
-errorTolerance = 2
+maximumGap = 50
+errorTolerance = 10
 
 
 """
@@ -34,85 +34,66 @@ Looped processing
 """
 
 
-currentBuffDistance = maximumGap / 2
-currentSimpFactor = errorTolerance * 0.95
-
 currentBasePolygonLayer1 = polygonLayer1
 currentBasePolygonLayer2 = polygonLayer2
 
 
-while currentBuffDistance > (errorTolerance/8):
+for currentBufferNumber in range(int(maximumGap / (errorTolerance / 4.1))):
     
-    processing.run("native:buffer", {'INPUT':currentBasePolygonLayer1,'DISTANCE':currentBuffDistance,'SEGMENTS':5,
-    'END_CAP_STYLE':0,'JOIN_STYLE':0,'MITER_LIMIT':2,'DISSOLVE':False,'SEPARATE_DISJOINT':False,'OUTPUT':processDirectory + 'PolygonLayer1Buffer' + str(currentBuffDistance) + '.gpkg'})
+    processing.run("native:buffer", {'INPUT':currentBasePolygonLayer1,'DISTANCE':errorTolerance / 4.1,'SEGMENTS':5,
+    'END_CAP_STYLE':0,'JOIN_STYLE':0,'MITER_LIMIT':2,'DISSOLVE':False,'SEPARATE_DISJOINT':False,'OUTPUT':processDirectory + 'PolygonLayer1Buffer' + str(currentBufferNumber) + '.gpkg'})
     
-    processing.run("native:buffer", {'INPUT':currentBasePolygonLayer2,'DISTANCE':currentBuffDistance,'SEGMENTS':5,
-    'END_CAP_STYLE':0,'JOIN_STYLE':0,'MITER_LIMIT':2,'DISSOLVE':False,'SEPARATE_DISJOINT':False,'OUTPUT':processDirectory + 'PolygonLayer2Buffer' + str(currentBuffDistance) + '.gpkg'})
-    
-    
-    
-    processing.run("native:difference", {'INPUT':processDirectory + 'PolygonLayer1Buffer' + str(currentBuffDistance) + '.gpkg',
-    'OVERLAY':processDirectory + 'PolygonLayer2Buffer' + str(currentBuffDistance) + '.gpkg','OUTPUT':processDirectory + 'PolygonLayer1Buffer' + str(currentBuffDistance) + 'Safe.gpkg','GRID_SIZE':None})
-    
-    processing.run("native:difference", {'INPUT':processDirectory + 'PolygonLayer2Buffer' + str(currentBuffDistance) + '.gpkg',
-    'OVERLAY':processDirectory + 'PolygonLayer1Buffer' + str(currentBuffDistance) + '.gpkg','OUTPUT':processDirectory + 'PolygonLayer2Buffer' + str(currentBuffDistance) + 'Safe.gpkg','GRID_SIZE':None})
-    
-    
-    currentSimpFactor = currentSimpFactor * 0.5
-    
-    processing.run("native:simplifygeometries", {'INPUT':processDirectory + 'PolygonLayer1Buffer' + str(currentBuffDistance) + 'Safe.gpkg','METHOD':0,
-    'TOLERANCE':currentSimpFactor,'OUTPUT':processDirectory + 'PolygonLayer1Buffer' + str(currentBuffDistance) + 'Simped.gpkg'})
-    
-    processing.run("native:simplifygeometries", {'INPUT':processDirectory + 'PolygonLayer2Buffer' + str(currentBuffDistance) + 'Safe.gpkg','METHOD':0,
-    'TOLERANCE':currentSimpFactor,'OUTPUT':processDirectory + 'PolygonLayer2Buffer' + str(currentBuffDistance) + 'Simped.gpkg'})
+    processing.run("native:buffer", {'INPUT':currentBasePolygonLayer2,'DISTANCE':errorTolerance / 4.1,'SEGMENTS':5,
+    'END_CAP_STYLE':0,'JOIN_STYLE':0,'MITER_LIMIT':2,'DISSOLVE':False,'SEPARATE_DISJOINT':False,'OUTPUT':processDirectory + 'PolygonLayer2Buffer' + str(currentBufferNumber) + '.gpkg'})
     
     
     
-    processing.run("native:buffer", {'INPUT':processDirectory + 'PolygonLayer1Buffer' + str(currentBuffDistance) + 'Simped.gpkg','DISTANCE':-1 * currentSimpFactor,'SEGMENTS':5,
-    'END_CAP_STYLE':0,'JOIN_STYLE':0,'MITER_LIMIT':2,'DISSOLVE':False,'SEPARATE_DISJOINT':False,'OUTPUT':processDirectory + 'PolygonLayer1Buffer' + str(currentBuffDistance) + 'Inward.gpkg'})
+    processing.run("native:difference", {'INPUT':processDirectory + 'PolygonLayer1Buffer' + str(currentBufferNumber) + '.gpkg',
+    'OVERLAY':processDirectory + 'PolygonLayer2Buffer' + str(currentBufferNumber) + '.gpkg','OUTPUT':processDirectory + 'PolygonLayer1Buffer' + str(currentBufferNumber) + 'Safe.gpkg','GRID_SIZE':None})
     
-    processing.run("native:buffer", {'INPUT':processDirectory + 'PolygonLayer2Buffer' + str(currentBuffDistance) + 'Simped.gpkg','DISTANCE':-1 * currentSimpFactor,'SEGMENTS':5,
-    'END_CAP_STYLE':0,'JOIN_STYLE':0,'MITER_LIMIT':2,'DISSOLVE':False,'SEPARATE_DISJOINT':False,'OUTPUT':processDirectory + 'PolygonLayer2Buffer' + str(currentBuffDistance) + 'Inward.gpkg'})
-    
-    
-    
-    processing.run("native:mergevectorlayers", {'LAYERS':[processDirectory + 'PolygonLayer1Buffer' + str(currentBuffDistance) + 'Inward.gpkg',currentBasePolygonLayer1],
-    'CRS':None,'OUTPUT':processDirectory + 'PolygonLayer1Buffer' + str(currentBuffDistance) + 'Merged.gpkg'})
-    
-    processing.run("native:mergevectorlayers", {'LAYERS':[processDirectory + 'PolygonLayer2Buffer' + str(currentBuffDistance) + 'Inward.gpkg',currentBasePolygonLayer2],
-    'CRS':None,'OUTPUT':processDirectory + 'PolygonLayer2Buffer' + str(currentBuffDistance) + 'Merged.gpkg'})
+    processing.run("native:difference", {'INPUT':processDirectory + 'PolygonLayer2Buffer' + str(currentBufferNumber) + '.gpkg',
+    'OVERLAY':processDirectory + 'PolygonLayer1Buffer' + str(currentBufferNumber) + '.gpkg','OUTPUT':processDirectory + 'PolygonLayer2Buffer' + str(currentBufferNumber) + 'Safe.gpkg','GRID_SIZE':None})
     
     
+    processing.run("native:mergevectorlayers", {'LAYERS':[processDirectory + 'PolygonLayer1Buffer' + str(currentBufferNumber) + 'Safe.gpkg',currentBasePolygonLayer1],
+    'CRS':None,'OUTPUT':processDirectory + 'PolygonLayer1Buffer' + str(currentBufferNumber) + 'Merged.gpkg'})
     
-    processing.run("native:dissolve", {'INPUT':processDirectory + 'PolygonLayer1Buffer' + str(currentBuffDistance) + 'Merged.gpkg','FIELD':[],'SEPARATE_DISJOINT':False,
-    'OUTPUT':processDirectory + 'PolygonLayer1Buffer' + str(currentBuffDistance) + 'Dissolved.gpkg'})
-    
-    processing.run("native:dissolve", {'INPUT':processDirectory + 'PolygonLayer2Buffer' + str(currentBuffDistance) + 'Merged.gpkg','FIELD':[],'SEPARATE_DISJOINT':False,
-    'OUTPUT':processDirectory + 'PolygonLayer2Buffer' + str(currentBuffDistance) + 'Dissolved.gpkg'})
+    processing.run("native:mergevectorlayers", {'LAYERS':[processDirectory + 'PolygonLayer2Buffer' + str(currentBufferNumber) + 'Safe.gpkg',currentBasePolygonLayer2],
+    'CRS':None,'OUTPUT':processDirectory + 'PolygonLayer2Buffer' + str(currentBufferNumber) + 'Merged.gpkg'})
     
     
     
-    currentBasePolygonLayer1 = processDirectory + 'PolygonLayer1Buffer' + str(currentBuffDistance) + 'Dissolved.gpkg'
-    currentBasePolygonLayer2 = processDirectory + 'PolygonLayer2Buffer' + str(currentBuffDistance) + 'Dissolved.gpkg'
+    processing.run("native:dissolve", {'INPUT':processDirectory + 'PolygonLayer1Buffer' + str(currentBufferNumber) + 'Merged.gpkg','FIELD':[],'SEPARATE_DISJOINT':False,
+    'OUTPUT':processDirectory + 'PolygonLayer1Buffer' + str(currentBufferNumber) + 'Dissolved.gpkg'})
+    
+    processing.run("native:dissolve", {'INPUT':processDirectory + 'PolygonLayer2Buffer' + str(currentBufferNumber) + 'Merged.gpkg','FIELD':[],'SEPARATE_DISJOINT':False,
+    'OUTPUT':processDirectory + 'PolygonLayer2Buffer' + str(currentBufferNumber) + 'Dissolved.gpkg'})
     
     
-    currentBuffDistance = currentBuffDistance / 2
+    
+    currentBasePolygonLayer1 = processDirectory + 'PolygonLayer1Buffer' + str(currentBufferNumber) + 'Dissolved.gpkg'
+    currentBasePolygonLayer2 = processDirectory + 'PolygonLayer2Buffer' + str(currentBufferNumber) + 'Dissolved.gpkg'
+    
 
 
 """
 ##########################################################
-Final tidying
+Tidy up and snap
 """
 
 
-processing.run("native:simplifygeometries", {'INPUT':currentBasePolygonLayer1,'METHOD':2,'TOLERANCE':errorTolerance / 2,'OUTPUT':processDirectory + 'PolygonLayer1BuffedSimped.gpkg'})
+processing.run("native:simplifygeometries", {'INPUT':currentBasePolygonLayer1,'METHOD':2,'TOLERANCE':errorTolerance,'OUTPUT':processDirectory + 'PolygonLayer1BuffedSimped.gpkg'})
 
+processing.run("native:fixgeometries", {'INPUT':processDirectory + 'PolygonLayer1BuffedSimped.gpkg','METHOD':1,
+    'OUTPUT':processDirectory + 'PolygonLayer1BuffedSimpedFixed.gpkg'})
+    
 
-processing.run("native:snapgeometries", {'INPUT':processDirectory + 'PolygonLayer1BuffedSimped.gpkg','REFERENCE_LAYER':polygonLayer1,'TOLERANCE':errorTolerance,'BEHAVIOR':0,
+processing.run("native:snapgeometries", {'INPUT':processDirectory + 'PolygonLayer1BuffedSimpedFixed.gpkg','REFERENCE_LAYER':polygonLayer1,'TOLERANCE':errorTolerance,'BEHAVIOR':0,
     'OUTPUT':processDirectory + 'PolygonLayer1BufferSimpedSnapped.gpkg'})
     
 processing.run("native:fixgeometries", {'INPUT':processDirectory + 'PolygonLayer1BufferSimpedSnapped.gpkg','METHOD':1,
     'OUTPUT':processDirectory + 'PolygonLayer1BufferSimpedSnappedFixed.gpkg'})
+
 
 
 processing.run("native:snapgeometries", {'INPUT':currentBasePolygonLayer2,'REFERENCE_LAYER':processDirectory + 'PolygonLayer1BufferSimpedSnappedFixed.gpkg','TOLERANCE':errorTolerance,'BEHAVIOR':0,
@@ -123,19 +104,93 @@ processing.run("native:fixgeometries", {'INPUT':processDirectory + 'PolygonLayer
     
     
     
-processing.run("native:snapgeometries", {'INPUT':processDirectory + 'PolygonLayer1BufferSimpedSnappedFixed.gpkg','REFERENCE_LAYER':processDirectory + 'PolygonLayer2BufferSnappedFixed.gpkg','TOLERANCE':errorTolerance,'BEHAVIOR':0,
-    'OUTPUT':processDirectory + 'PolygonLayer1BufferSimpedSnappedFixedSnapped.gpkg'})
+"""
+##########################################################
+Provide a final buffering after snapping
+"""
     
-processing.runAndLoadResults("native:fixgeometries", {'INPUT':processDirectory + 'PolygonLayer1BufferSimpedSnappedFixedSnapped.gpkg','METHOD':1,
-    'OUTPUT':processDirectory + 'PolygonLayer1BufferSimpedSnappedFixedSnappedFixed.gpkg'})
+    
+
+processing.run("native:buffer", {'INPUT':processDirectory + 'PolygonLayer1BufferSimpedSnappedFixed.gpkg','DISTANCE':errorTolerance / 4.1,'SEGMENTS':5,
+'END_CAP_STYLE':0,'JOIN_STYLE':0,'MITER_LIMIT':2,'DISSOLVE':False,'SEPARATE_DISJOINT':False,'OUTPUT':processDirectory + 'PolygonLayer1BufferFinalRun.gpkg'})
+    
+processing.run("native:buffer", {'INPUT':processDirectory + 'PolygonLayer2BufferSnappedFixed.gpkg','DISTANCE':errorTolerance / 4.1,'SEGMENTS':5,
+'END_CAP_STYLE':0,'JOIN_STYLE':0,'MITER_LIMIT':2,'DISSOLVE':False,'SEPARATE_DISJOINT':False,'OUTPUT':processDirectory + 'PolygonLayer2BufferFinalRun.gpkg'})
+    
+    
+
+processing.run("native:difference", {'INPUT':processDirectory + 'PolygonLayer1Buffer' + str(currentBufferNumber) + '.gpkg',
+'OVERLAY':processDirectory + 'PolygonLayer2BufferFinalRun.gpkg','OUTPUT':processDirectory + 'PolygonLayer1BufferFinalRunSafe.gpkg','GRID_SIZE':None})
+
+processing.run("native:difference", {'INPUT':processDirectory + 'PolygonLayer2Buffer' + str(currentBufferNumber) + '.gpkg',
+'OVERLAY':processDirectory + 'PolygonLayer1BufferFinalRun.gpkg','OUTPUT':processDirectory + 'PolygonLayer2BufferFinalRunSafe.gpkg','GRID_SIZE':None})
+
+
+processing.run("native:mergevectorlayers", {'LAYERS':[processDirectory + 'PolygonLayer1BufferFinalRunSafe.gpkg',currentBasePolygonLayer1],
+'CRS':None,'OUTPUT':processDirectory + 'PolygonLayer1BufferFinalRunMerged.gpkg'})
+
+processing.run("native:mergevectorlayers", {'LAYERS':[processDirectory + 'PolygonLayer2BufferFinalRunSafe.gpkg',currentBasePolygonLayer2],
+'CRS':None,'OUTPUT':processDirectory + 'PolygonLayer2BufferFinalRunMerged.gpkg'})
 
 
 
-processing.run("native:snapgeometries", {'INPUT':processDirectory + 'PolygonLayer2BufferSnappedFixed.gpkg','REFERENCE_LAYER':processDirectory + 'PolygonLayer1BufferSimpedSnappedFixedSnappedFixed.gpkg','TOLERANCE':errorTolerance,'BEHAVIOR':0,
-    'OUTPUT':processDirectory + 'PolygonLayer2BufferSnappedFixedSnapped.gpkg'})
+processing.run("native:dissolve", {'INPUT':processDirectory + 'PolygonLayer1BufferFinalRunMerged.gpkg','FIELD':[],'SEPARATE_DISJOINT':False,
+'OUTPUT':processDirectory + 'PolygonLayer1BufferFinalRunDissolved.gpkg'})
 
-processing.runAndLoadResults("native:fixgeometries", {'INPUT':processDirectory + 'PolygonLayer2BufferSnappedFixedSnapped.gpkg','METHOD':1,
-    'OUTPUT':processDirectory + 'PolygonLayer2BufferSnappedFixedSnappedFixed.gpkg'})
+processing.run("native:dissolve", {'INPUT':processDirectory + 'PolygonLayer2BufferFinalRunMerged.gpkg','FIELD':[],'SEPARATE_DISJOINT':False,
+'OUTPUT':processDirectory + 'PolygonLayer2BufferFinalRunDissolved.gpkg'})
+
+
+    
+"""
+##########################################################
+Final snapping
+"""
+
+processing.run("native:multiparttosingleparts", {'INPUT':processDirectory + 'PolygonLayer1BufferFinalRunDissolved.gpkg','OUTPUT':processDirectory + 'PolygonLayer1BufferFinalRunDissolvedSingle.gpkg'})
+
+processing.run("native:multiparttosingleparts", {'INPUT':processDirectory + 'PolygonLayer2BufferFinalRunDissolved.gpkg','OUTPUT':processDirectory + 'PolygonLayer2BufferFinalRunDissolvedSingle.gpkg'})
+
+
+
+processing.run("native:extractbyexpression", {'INPUT':processDirectory + 'PolygonLayer1BufferFinalRunDissolvedSingle.gpkg','EXPRESSION':'$area > ' + str(errorTolerance ** 2),
+'OUTPUT':processDirectory + 'PolygonLayer1BufferFinalRunDissolvedSingleFilter.gpkg'})
+
+processing.run("native:extractbyexpression", {'INPUT':processDirectory + 'PolygonLayer2BufferFinalRunDissolvedSingle.gpkg','EXPRESSION':'$area > ' + str(errorTolerance ** 2),
+'OUTPUT':processDirectory + 'PolygonLayer2BufferFinalRunDissolvedSingleFilter.gpkg'})
+
+
+
+processing.run("native:fixgeometries", {'INPUT':processDirectory + 'PolygonLayer1BufferFinalRunDissolvedSingleFilter.gpkg','METHOD':1,
+    'OUTPUT':processDirectory + 'PolygonLayer1BufferFinalRunDissolvedSingleFixed.gpkg'})
+
+processing.run("native:fixgeometries", {'INPUT':processDirectory + 'PolygonLayer2BufferFinalRunDissolvedSingleFilter.gpkg','METHOD':1,
+    'OUTPUT':processDirectory + 'PolygonLayer2BufferFinalRunDissolvedSingleFixed.gpkg'})
+
+
+
+processing.run("native:simplifygeometries", {'INPUT':processDirectory + 'PolygonLayer1BufferFinalRunDissolvedSingleFixed.gpkg','METHOD':0,'TOLERANCE':errorTolerance/3,
+    'OUTPUT':processDirectory + 'PolygonLayer1BufferFinalRunDissolvedSingleFixedSimp.gpkg'})
+    
+processing.run("native:simplifygeometries", {'INPUT':processDirectory + 'PolygonLayer2BufferFinalRunDissolvedSingleFixed.gpkg','METHOD':0,'TOLERANCE':errorTolerance/3,
+    'OUTPUT':processDirectory + 'PolygonLayer2BufferFinalRunDissolvedSingleFixedSimp.gpkg'})
+   
+    
+processing.run("native:snapgeometries", {'INPUT':processDirectory + 'PolygonLayer2BufferFinalRunDissolvedSingleFixedSimp.gpkg','REFERENCE_LAYER':processDirectory + 'PolygonLayer1BufferFinalRunDissolvedSingleFixedSimp.gpkg',
+    'TOLERANCE':errorTolerance,'BEHAVIOR':1,'OUTPUT':processDirectory + 'PolygonLayer2BufferFinalRunDissolvedSingleFixedSimpSnapped.gpkg'})
+
+processing.run("native:fixgeometries", {'INPUT':processDirectory + 'PolygonLayer2BufferFinalRunDissolvedSingleFixedSimpSnapped.gpkg','METHOD':1,
+    'OUTPUT':processDirectory + 'PolygonLayer2BufferFinalRunDissolvedSingleFixedSimpSnappedFixed.gpkg'})
+    
+#############
+  
+    
+    
+processing.run("native:snapgeometries", {'INPUT':processDirectory + 'PolygonLayer1BufferFinalRunDissolvedSingleFixedSimp.gpkg','REFERENCE_LAYER':processDirectory + 'PolygonLayer2BufferFinalRunDissolvedSingleFixedSimpSnappedFixed.gpkg',
+    'TOLERANCE':errorTolerance,'BEHAVIOR':2,'OUTPUT':processDirectory + 'PolygonLayer1BufferFinalRunDissolvedSingleFixedSimpSnapped.gpkg'})
+    
+
+    
 
     
     
